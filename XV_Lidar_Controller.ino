@@ -17,7 +17,7 @@
 #include <EEPROM.h>
 #include <EEPROMAnything.h>
 #include <SerialCommand.h>
-
+SoftwareSerial talkToLidar(8,9); //DREYCHANGE190507
 const int N_ANGLES = 360;                // # of angles (0..359)
 const int SHOW_ALL_ANGLES = N_ANGLES;    // value means 'display all angle data, 0..359'
 
@@ -123,19 +123,19 @@ uint16_t startingAngle = 0;                      // the first scan angle (of gro
 SerialCommand sCmd;
 
 boolean ledState = LOW;
+//dreychange 190507
+//#if defined(__AVR_ATmega32U4__) && defined(CORE_TEENSY)  // if Teensy 2.0
+//const int ledPin = 11;
 
-#if defined(__AVR_ATmega32U4__) && defined(CORE_TEENSY)  // if Teensy 2.0
-const int ledPin = 11;
-
-#elif defined(__AVR_ATmega32U4__)  // if Leonardo (no LED for Pro Micro)
+//#elif defined(__AVR_ATmega32U4__)  // if Leonardo (no LED for Pro Micro)
 const int ledPin = 13;
 
-#elif defined(__MK20DX256__)  // if Teensy 3.1
-const int ledPin = 13;
+//#elif defined(__MK20DX256__)  // if Teensy 3.1
+//const int ledPin = 13;
 
-#elif defined(__MKL26Z64__)  // if Teensy LC
-const int ledPin = 13;
-#endif
+//#elif defined(__MKL26Z64__)  // if Teensy LC
+//const int ledPin = 13;
+//#endif
 
 // initialization (before 'loop')
 void setup() {
@@ -145,13 +145,14 @@ void setup() {
   }
   pinMode(xv_config.motor_pwm_pin, OUTPUT);
   Serial.begin(115200);                    // USB serial
-#if defined(__AVR_ATmega32U4__)
-  Serial1.begin(115200);                   // XV LDS data
-#elif defined(__MK20DX256__)               // if Teensy 3.1
-  Serial1.begin(115200);                   // XV LDS data
-#elif defined(__MKL26Z64__)                // if Teensy LC
-  Serial1.begin(115200);                   // XV LDS data
-#endif
+  talkToLidat.begin(9600); //dreychange 190507
+//#if defined(__AVR_ATmega32U4__)
+//  Serial1.begin(115200);                   // XV LDS data
+//#elif defined(__MK20DX256__)               // if Teensy 3.1
+//  Serial1.begin(115200);                   // XV LDS data
+//#elif defined(__MKL26Z64__)                // if Teensy LC
+//  Serial1.begin(115200);                   // XV LDS data
+//#endif
 
   Timer3.initialize(30);                           // set PWM frequency to 32.768kHz
 
@@ -173,8 +174,8 @@ void loop() {
   byte aryInvalidDataFlag[N_DATA_QUADS] = {0, 0, 0, 0}; // non-zero = INVALID_DATA_FLAG or STRENGTH_WARNING_FLAG is set
 
   sCmd.readSerial();  // check for incoming serial commands
-  if (Serial1.available() > 0) {                  // read byte from LIDAR and relay to USB
-    inByte = Serial1.read();                      // get incoming byte:
+  if (talkToLidar.available() > 0) {                  // read byte from LIDAR and relay to USB
+    inByte = talkToLidar.read();                      // get incoming byte:
     if (xv_config.raw_data)
       Serial.write(inByte);                 // relay
 
@@ -407,19 +408,19 @@ byte eValidatePacket() {
 void initEEPROM() {
   xv_config.id = 0x07;
   strcpy(xv_config.version, "1.4.0");
+//dreychange190507
+//#if defined(__AVR_ATmega32U4__) && defined(CORE_TEENSY)  // if Teensy 2.0
+//  xv_config.motor_pwm_pin = 9;  // pin connected N-Channel Mosfet
 
-#if defined(__AVR_ATmega32U4__) && defined(CORE_TEENSY)  // if Teensy 2.0
-  xv_config.motor_pwm_pin = 9;  // pin connected N-Channel Mosfet
+//#elif defined(__AVR_ATmega32U4__)  // if Leonardo or Pro Micro
+xv_config.motor_pwm_pin = 5;  // pin connected N-Channel Mosfet
 
-#elif defined(__AVR_ATmega32U4__)  // if Leonardo or Pro Micro
-  xv_config.motor_pwm_pin = 5;  // pin connected N-Channel Mosfet
+//#elif defined(__MK20DX256__)  // if Teensy 3.1
+//  xv_config.motor_pwm_pin = 33;  // pin connected N-Channel Mosfet
 
-#elif defined(__MK20DX256__)  // if Teensy 3.1
-  xv_config.motor_pwm_pin = 33;  // pin connected N-Channel Mosfet
-
-#elif defined(__MKL26Z64__)  // if Teensy LC
-  xv_config.motor_pwm_pin = 4;  // pin connected N-Channel Mosfet
-#endif
+//#elif defined(__MKL26Z64__)  // if Teensy LC
+//  xv_config.motor_pwm_pin = 4;  // pin connected N-Channel Mosfet
+//#endif
 
   xv_config.rpm_setpoint = 200;  // desired RPM
   xv_config.rpm_min = 200;
